@@ -257,344 +257,183 @@ const exampleData = [
 ];
 
 const TextClassifier = () => {
-  const [activeTab, setActiveTab] = useState("label");
+  const [step, setStep] = useState(1);  // 当前步骤
   const [dataset, setDataset] = useState(exampleData);
-  const [labelText, setLabelText] = useState("");
-  const [testText, setTestText] = useState("");
+  const [inputText, setInputText] = useState("");
   const [isTraining, setIsTraining] = useState(false);
-  const [trainProgress, setTrainProgress] = useState(0);
   const [modelTrained, setModelTrained] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [featureWeights, setFeatureWeights] = useState(null);
   const [classifier] = useState(new NaiveBayes());
 
   // 添加新数据
-  const handleAddData = (label) => {
-    if (!labelText.trim()) return;
-    setDataset([...dataset, { text: labelText, label }]);
-    setLabelText("");
-    setModelTrained(false);
-  };
-
-  // Tab切换
-  const handleTabChange = (tab) => {
-    const tabNames = {
-      label: '数据标注',
-      train: '模型训练',
-      test: '模型测试'
-    };
+  const handleLabel = (label) => {
+    if (!inputText.trim()) return;
+    setDataset([...dataset, { text: inputText, label }]);
+    setInputText("");
     
-    window.dataLayer?.push({
-      event: 'zjsr_tab_switch',
-      custom_key1: tabNames[tab]
-    });
-    setActiveTab(tab);
-  };
-
-  // 标注
-  const handleLabel = (type) => {
-    if (!labelText.trim()) return;
-    
-    // 埋点
-    window.dataLayer?.push({
-      event: type === 'praise' ? 'zjsr_mark_praise' : 'zjsr_mark_criticize',
-      custom_key1: labelText
-    });
-
-    // 调用原有的标注逻辑
-    handleAddData(type === 'praise' ? '表扬' : '批评');
+    // 如果达到6条数据，自动进入下一步
+    if (dataset.length >= 5) {  // 加上新添加的这条就是6条
+      setTimeout(() => setStep(2), 500);
+    }
   };
 
   // 训练模型
   const handleTrain = () => {
-    window.dataLayer?.push({
-      event: 'zjsr_model_train',
-      custom_key1: modelTrained ? '重新训练' : '开始训练'
-    });
     setIsTraining(true);
-    setTrainProgress(0);
     
     // 模拟训练进度
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setTrainProgress(progress);
-      
-      if (progress === 50) {
-        // 实际训练模型
-        classifier.train(dataset);
-        // 获取特征权重
-        setFeatureWeights(classifier.getFeatureWeights());
-      }
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setIsTraining(false);
-        setModelTrained(true);
-      }
-    }, 100);
+    setTimeout(() => {
+      classifier.train(dataset);
+      setIsTraining(false);
+      setModelTrained(true);
+      setStep(3);  // 训练完成后自动进入测试步骤
+    }, 2000);
   };
 
   // 测试模型
   const handleTest = () => {
-    if (!testText.trim()) return;
-    
-    window.dataLayer?.push({
-      event: 'zjsr_test'
-    });
-
-    const result = classifier.predict(testText);
+    if (!inputText.trim()) return;
+    const result = classifier.predict(inputText);
     setTestResult(result);
-
-    // 测试结果埋点
-    window.dataLayer?.push({
-      event: 'zjsr_test_result',
-      custom_key1: testText,
-      custom_key2: result.label,
-      custom_key3: result.confidence
-    });
-  };
-
-  // 添加删除数据的处理函数
-  const handleDeleteData = (index) => {
-    const newDataset = [...dataset];
-    newDataset.splice(index, 1);
-    setDataset(newDataset);
-    setModelTrained(false); // 数据变化后需要重新训练
   };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardContent className="p-6">
-        <div className="flex items-start mb-4">
-          <div className="flex items-center gap-2">
-            <Brain className="w-6 h-6 text-blue-500" />
-            <h2 className="text-xl font-bold">文本分类训练</h2>
-          </div>
-        </div>
+      <CardContent className="p-3 sm:p-6">
+        {step === 1 && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-xl sm:text-2xl font-bold">
+                1
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold">先来教我分辨表扬和批评的话～</h2>
+            </div>
 
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg text-sm text-gray-600 text-left">
-          <h3 className="font-bold mb-2 text-gray-700">使用说明：</h3>
-          <ol className="list-decimal ml-4 space-y-1">
-            <li>第一步：在"数据标注"页面输入文本并标注为"表扬"或"批评"（至少需要6条数据）</li>
-            <li>第二步：切换到"模型训练"页面，点击"开始训练"按钮训练模型</li>
-            <li>第三步：在"模型测试"页面输入新的文本进行测试，查看分类结果和置信度</li>
-          </ol>
-          <div className="mt-2 text-xs text-gray-500">
-            提示：数据量越大，模型效果越好。建议每个类别至少标注3条以上的数据。
-          </div>
-        </div>
+            <div className="p-3 sm:p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm sm:text-base leading-relaxed">
+                <span className="inline-block">至少需要标记 6 句话,&nbsp;</span>
+                <span className="inline-block">现在已经标记了 {dataset.length} 句</span>
+              </p>
+            </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="mb-4 w-full justify-start gap-2">
-            <TabsTrigger 
-              value="label" 
-              disabled={isTraining} 
-              className="flex-1 max-w-[120px] text-sm px-2"
-            >
-              <Tag className="w-3 h-3 mr-1" />
-              数据标注
-            </TabsTrigger>
-            <TabsTrigger 
-              value="train" 
-              disabled={isTraining || dataset.length < 6} 
-              className="flex-1 max-w-[120px] text-sm px-2"
-            >
-              <Brain className="w-3 h-3 mr-1" />
-              模型训练
-            </TabsTrigger>
-            <TabsTrigger 
-              value="test" 
-              disabled={!modelTrained} 
-              className="flex-1 max-w-[120px] text-sm px-2"
-            >
-              <Play className="w-3 h-3 mr-1" />
-              模型测试
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="label" className="space-y-4">
-            <div className="flex flex-col gap-2">
+            <div className="space-y-3 sm:space-y-4">
               <Input
-                value={labelText}
-                onChange={(e) => setLabelText(e.target.value)}
-                placeholder="输入一句话..."
-                className="w-full"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="在这里输入一句话..."
+                className="text-base sm:text-lg p-4 sm:p-6"
               />
-              <div className="flex gap-2">
+              
+              <div className="flex gap-2 sm:gap-4">
                 <Button 
-                  onClick={() => handleLabel('praise')}
+                  onClick={() => handleLabel('表扬')}
+                  className="flex-1 h-12 sm:h-16 text-sm sm:text-lg px-2 sm:px-4"
                   variant="outline"
-                  className="flex-1"
                 >
-                  标注为表扬
+                  这是表扬的话 👍
                 </Button>
                 <Button 
-                  onClick={() => handleLabel('criticize')}
+                  onClick={() => handleLabel('批评')}
+                  className="flex-1 h-12 sm:h-16 text-sm sm:text-lg px-2 sm:px-4"
                   variant="outline"
-                  className="flex-1"
                 >
-                  标注为批评
+                  这是批评的话 👎
                 </Button>
               </div>
             </div>
 
-            <div className="border rounded-lg p-4">
-              <h3 className="font-bold mb-4">
-                已标注数据 ({dataset.length})
-              </h3>
-              <div className="space-y-2">
-                {dataset.map((item, index) => (
-                  <div 
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                  >
-                    <span className="flex-1 text-left">{item.text}</span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={
-                        `px-2 py-1 rounded text-sm shrink-0 ${
-                          item.label === "表扬" ? 
-                          "bg-green-100 text-green-700" : 
-                          "bg-red-100 text-red-700"
-                        }`
-                      }>
-                        {item.label}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteData(index)}
-                        className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
-                        title="删除"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 6L6 18M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {dataset.length < 6 && (
-              <div className="text-sm text-gray-500">
-                至少需要6条数据才能开始训练
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="train" className="space-y-4">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-bold mb-4">训练进度</h3>
-              {isTraining ? (
-                <div className="space-y-2">
-                  <Progress value={trainProgress} />
-                  <div className="text-sm text-gray-500">
-                    正在训练模型... {trainProgress}%
-                  </div>
+            <div className="space-y-2">
+              {dataset.map((item, index) => (
+                <div 
+                  key={index}
+                  className={`p-3 sm:p-4 rounded-lg text-base sm:text-lg ${
+                    item.label === "表扬" 
+                      ? "bg-green-50 text-green-700" 
+                      : "bg-red-50 text-red-700"
+                  }`}
+                >
+                  {item.text}
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-xl sm:text-2xl font-bold">
+                2
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold">让我学习一下这些例子～</h2>
+            </div>
+
+            <div className="p-6 sm:p-8 bg-blue-50 rounded-lg flex flex-col items-center gap-4">
+              {isTraining ? (
+                <>
+                  <div className="text-xl sm:text-2xl">正在认真学习中...</div>
+                  <div className="animate-bounce text-3xl sm:text-4xl">🤔</div>
+                </>
               ) : (
                 <Button 
                   onClick={handleTrain}
-                  disabled={dataset.length < 6}
-                  className="w-full"
+                  className="h-12 sm:h-16 text-base sm:text-lg px-6 sm:px-8"
                 >
-                  {modelTrained ? "重新训练" : "开始训练"}
+                  开始学习
                 </Button>
               )}
             </div>
+          </div>
+        )}
 
-            {featureWeights && (
-              <div className="border rounded-lg p-4">
-                <h3 className="font-bold mb-4">特征词分析</h3>
-                <div className="text-sm text-gray-500 mb-4">
-                  颜色越深表示该词对分类的影响越大
-                </div>
-                <div className="space-y-6">
-                  {Object.entries(featureWeights).map(([label, words]) => (
-                    <div key={label} className="space-y-2">
-                      <div className="font-medium">
-                        {label === "表扬" ? "👍 表扬" : "👎 批评"}类别的关键词：
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {words.map((item, index) => {
-                          // 将权重映射到透明度，让差异更明显
-                          const opacity = 0.2 + Math.pow(item.weight, 2);
-                          
-                          // 使用 HSL 颜色以获得更好的对比度
-                          const bgColor = label === "表扬" 
-                            ? `hsla(142, 76%, 36%, ${opacity})`    // 深绿色
-                            : `hsla(0, 84%, 60%, ${opacity})`;     // 深红色
-                          
-                          // 文字颜色
-                          const textColor = opacity > 0.4
-                            ? 'white'   
-                            : label === "表扬" 
-                              ? 'hsl(142, 76%, 25%)'   
-                              : 'hsl(0, 84%, 40%)';    
-
-                          return (
-                            <div 
-                              key={index}
-                              className="flex items-center justify-center p-2 rounded text-sm font-medium"
-                              style={{ 
-                                backgroundColor: bgColor,
-                                color: textColor,
-                                boxShadow: opacity > 0.5 ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                                transition: 'all 0.2s ease'
-                              }}
-                            >
-                              {item.word}
-                              <span className="ml-1 opacity-50 text-xs">
-                                {(item.weight * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {step === 3 && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-xl sm:text-2xl font-bold">
+                3
               </div>
-            )}
-          </TabsContent>
+              <h2 className="text-lg sm:text-xl font-bold">来测试一下我学得怎么样！</h2>
+            </div>
 
-          <TabsContent value="test" className="space-y-4">
-            <div className="flex gap-2">
+            <div className="space-y-3 sm:space-y-4">
               <Input
-                value={testText}
-                onChange={(e) => setTestText(e.target.value)}
-                placeholder="输入测试文本..."
-                className="flex-1"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="输入一句话，测试我能不能判断对..."
+                className="text-base sm:text-lg p-4 sm:p-6"
               />
-              <Button onClick={handleTest}>
-                测试
+              
+              <Button 
+                onClick={handleTest}
+                className="w-full h-12 sm:h-16 text-base sm:text-lg"
+              >
+                测试一下
               </Button>
             </div>
 
             {testResult && (
-              <div className="border rounded-lg p-4">
-                <h3 className="font-bold mb-4">测试结果</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span>分类结果：</span>
-                    <span className={`font-bold ${
-                      testResult.label === "表扬" ? 
-                      "text-green-600" : 
-                      "text-red-600"
-                    }`}>
-                      {testResult.label}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>置信度：</span>
-                    <span>{(testResult.confidence * 100).toFixed(1)}%</span>
-                  </div>
-                  <Progress value={testResult.confidence * 100} />
+              <div className={`p-6 sm:p-8 rounded-lg text-center space-y-3 sm:space-y-4 ${
+                testResult.label === "表扬" 
+                  ? "bg-green-50" 
+                  : "bg-red-50"
+              }`}>
+                <div className="text-3xl sm:text-4xl">
+                  {testResult.label === "表扬" ? "👍" : "👎"}
+                </div>
+                <div className="text-xl sm:text-2xl font-bold">
+                  我觉得这是
+                  <span className={testResult.label === "表扬" ? "text-green-600" : "text-red-600"}>
+                    {testResult.label}
+                  </span>
+                  的话
+                </div>
+                <div className="text-base sm:text-lg">
+                  我的把握程度是：{(testResult.confidence * 100).toFixed(0)}%
                 </div>
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
