@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -265,36 +265,69 @@ const TextClassifier = () => {
   const [testResult, setTestResult] = useState(null);
   const [classifier] = useState(new NaiveBayes());
 
-  // 添加新数据
+  // 添加步骤变化埋点
+  useEffect(() => {
+    window.dataLayer?.push({
+      event: 'zjsr_tab_switch',
+      custom_key1: step
+    });
+  }, [step]);
+
+  // 标注数据
   const handleLabel = (label) => {
     if (!inputText.trim()) return;
+    
+    // 保留原有标注埋点
+    window.dataLayer?.push({
+      event: label === '表扬' ? 'zjsr_mark_praise' : 'zjsr_mark_criticize',
+      custom_key1: inputText
+    });
+
     setDataset([...dataset, { text: inputText, label }]);
     setInputText("");
     
     // 如果达到6条数据，自动进入下一步
-    if (dataset.length >= 5) {  // 加上新添加的这条就是6条
+    if (dataset.length >= 5) {
       setTimeout(() => setStep(2), 500);
     }
   };
 
   // 训练模型
   const handleTrain = () => {
+    // 保留原有训练埋点
+    window.dataLayer?.push({
+      event: 'zjsr_model_train'
+    });
+
     setIsTraining(true);
     
-    // 模拟训练进度
     setTimeout(() => {
       classifier.train(dataset);
       setIsTraining(false);
       setModelTrained(true);
-      setStep(3);  // 训练完成后自动进入测试步骤
+      setStep(3);
     }, 2000);
   };
 
   // 测试模型
   const handleTest = () => {
     if (!inputText.trim()) return;
+
+    // 保留原有测试埋点
+    window.dataLayer?.push({
+      event: 'zjsr_test',
+      custom_key1: inputText
+    });
+
     const result = classifier.predict(inputText);
     setTestResult(result);
+
+    // 保留原有测试结果埋点
+    window.dataLayer?.push({
+      event: 'zjsr_test_result',
+      custom_key1: result.label,
+      custom_key2: result.confidence
+    });
   };
 
   return (
