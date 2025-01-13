@@ -13,6 +13,10 @@ import babyAppPc from '@/assets/baby_app_pc.png';
 import babyAppMobile from '@/assets/baby_app_mobile.png';
 import titlePc from '@/assets/titile_pc.png';
 import titleMobile from '@/assets/titile_mobile.png';
+import avatarAppPc from '@/assets/avatar_app_pc.png';
+import avatarAppMobile from '@/assets/avatar_app_mobile.png';
+import wardrobeAppPc from '@/assets/wardrobe_app_pc.png';
+import wardrobeAppMobile from '@/assets/wardrobe_app_mobile.png';
 import {
   Carousel,
   CarouselContent,
@@ -43,12 +47,22 @@ const CAROUSEL_DATA = [
   },
   {
     id: 2,
-    title: "Baby生成器",
-    link: "https://momodel.cn/explore/66c5a22ea611758a8f66081f?type=app",
+    title: "趣味大头贴",
+    link: "https://momodel.cn/explore/66cbf49d9eeecf952066089c?type=app",
+    platform: 'app',
+    image: {
+      pc: avatarAppPc,
+      mobile: avatarAppMobile
+    }
+  },
+  {
+    id: 3,
+    title: "AI 小衣橱",
+    link: "https://momodel.cn/explore/666137708c7e0096cd7716b6?type=app",
     platform: 'mo',
     image: {
-      pc: babyAppPc,
-      mobile: babyAppMobile
+      pc: wardrobeAppPc,
+      mobile: wardrobeAppMobile
     }
   }
 ];
@@ -179,14 +193,14 @@ function App() {
               {CAROUSEL_DATA.map((item) => (
                 <CarouselItem key={item.id} className="basis-full">
                   <a 
-                    href={appendUrlParams(item.link, { src: "zjsrbanner" })}
+                    href={item.platform === 'mo' ? appendUrlParams(item.link, { src: "zjsrbanner" }) : appendUrlParams('https://app.momodel.cn', { src: "zjsrbanner" })}
                     target="_blank"
                     onClick={() => handleBannerClick(item.platform)}
                   >
                     <img 
                       src={isMobile ? item.image.mobile : item.image.pc}
                       alt={item.title}
-                      className="w-full h-auto rounded-2xl"
+                      className="w-full h-auto rounded-lg"
                     />
                   </a>
                 </CarouselItem>
