@@ -330,6 +330,22 @@ const TextClassifier = () => {
     });
   };
 
+  // 添加重置函数
+  const handleReset = () => {
+    // 重置所有状态
+    setStep(1);
+    setDataset(exampleData);
+    setInputText("");
+    setIsTraining(false);
+    setModelTrained(false);
+    setTestResult(null);
+    
+    // 添加埋点
+    window.dataLayer?.push({
+      event: 'zjsr_restart'
+    });
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-3 sm:p-6">
@@ -445,25 +461,35 @@ const TextClassifier = () => {
             </div>
 
             {testResult && (
-              <div className={`p-6 sm:p-8 rounded-lg text-center space-y-3 sm:space-y-4 ${
-                testResult.label === "表扬" 
-                  ? "bg-green-50" 
-                  : "bg-red-50"
-              }`}>
-                <div className="text-3xl sm:text-4xl">
-                  {testResult.label === "表扬" ? "👍" : "👎"}
+              <>
+                <div className={`p-6 sm:p-8 rounded-lg text-center space-y-3 sm:space-y-4 ${
+                  testResult.label === "表扬" 
+                    ? "bg-green-50" 
+                    : "bg-red-50"
+                }`}>
+                  <div className="text-3xl sm:text-4xl">
+                    {testResult.label === "表扬" ? "👍" : "👎"}
+                  </div>
+                  <div className="text-xl sm:text-2xl font-bold">
+                    我觉得这是
+                    <span className={testResult.label === "表扬" ? "text-green-600" : "text-red-600"}>
+                      {testResult.label}
+                    </span>
+                    的话
+                  </div>
+                  <div className="text-base sm:text-lg">
+                    我的把握程度是：{(testResult.confidence * 100).toFixed(0)}%
+                  </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold">
-                  我觉得这是
-                  <span className={testResult.label === "表扬" ? "text-green-600" : "text-red-600"}>
-                    {testResult.label}
-                  </span>
-                  的话
-                </div>
-                <div className="text-base sm:text-lg">
-                  我的把握程度是：{(testResult.confidence * 100).toFixed(0)}%
-                </div>
-              </div>
+
+                <Button 
+                  onClick={handleReset}
+                  variant="outline"
+                  className="w-full h-12 sm:h-16 text-base sm:text-lg mt-4"
+                >
+                  再玩一次 🔄
+                </Button>
+              </>
             )}
           </div>
         )}
