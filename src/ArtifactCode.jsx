@@ -9,25 +9,73 @@ import { Brain, Tag, Play, Plus } from 'lucide-react';
 // 朴素贝叶斯分类器
 class NaiveBayes {
   constructor() {
-    // 初始化词频统计
+    // 添加情感词典用于特征增强
+    this.sentimentDict = {
+      "表扬": new Set([
+        // 学习态度
+        '认真', '专注', '仔细', '用心', '细心', '耐心', '专心', '努力', '勤奋', '踏实',
+        // 学习能力
+        '优秀', '聪明', '灵活', '全面', '扎实', '出色', '优异', '突出', '卓越', '杰出',
+        // 进步表现
+        '进步', '提高', '改进', '成长', '突破', '创新', '超越', '优化', '完善', '提升',
+        // 品质评价
+        '好', '棒', '强', '佳', '优', '精', '妙', '赞', '绝', '秀',
+        // 具体表现
+        '领悟快', '思维活跃', '举一反三', '善于思考', '独立思考', '善于总结', '理解深刻',
+        '掌握牢固', '融会贯通', '触类旁通', '学以致用', '成绩优异', '表现突出'
+      ]),
+      "批评": new Set([
+        // 学习态度
+        '马虎', '粗心', '懒惰', '散漫', '敷衍', '应付', '草率', '大意', '随意', '松懈',
+        // 学习状态
+        '走神', '分心', '跟不上', '掉队', '落后', '退步', '不专注', '不认真', '不用心', '不上心',
+        // 问题表现
+        '差', '弱', '糟', '劣', '低', '散', '乱', '错', '偏', '漏',
+        // 具体问题
+        '理解不够', '掌握不牢', '基础薄弱', '注意力不集中', '学习习惯差', '完成不及时',
+        '准备不充分', '态度不端正', '没有进步', '没有改进', '没有提高', '没有长进',
+        // 行为描述
+        '开小差', '不听讲', '不做作业', '不按时完成', '抄袭作业', '考试作弊'
+      ])
+    };
+
+    // 保留原有的朴素贝叶斯相关属性
     this.wordFreq = {
       "表扬": new Map(),
       "批评": new Map()
     };
-    // 类别文档计数
     this.classCounts = {
       "表扬": 0,
       "批评": 0
     };
-    // 词表
     this.vocabulary = new Set();
-    // 拉普拉斯平滑参数
     this.alpha = 1;
   }
 
-  // 分词（按字符分）
+  // 改进分词方法
   tokenize(text) {
-    return text.split('');
+    const tokens = [];
+    let i = 0;
+    while (i < text.length) {
+      let matched = false;
+      // 优先匹配词典中的词
+      for (let len = 4; len > 0; len--) {
+        const word = text.slice(i, i + len);
+        if (this.sentimentDict.表扬.has(word) || 
+            this.sentimentDict.批评.has(word)) {
+          tokens.push(word);
+          i += len;
+          matched = true;
+          break;
+        }
+      }
+      // 如果没有匹配到词典中的词，就按字符分词
+      if (!matched) {
+        tokens.push(text[i]);
+        i++;
+      }
+    }
+    return tokens;
   }
 
   // 训练模型
@@ -72,23 +120,64 @@ class NaiveBayes {
   // 预测新文本
   predict(text) {
     const tokens = this.tokenize(text);
+    console.log('分词结果:', tokens);
+
+    // 先检查是否命中词典
+    let dictScore = 0;
+    let hasNegative = false;
+
+    tokens.forEach(token => {
+      // 处理否定词
+      if (token === '不' || token === '没' || token === '别' || token === '无') {
+        hasNegative = !hasNegative;
+        return;
+      }
+
+      // 计算词典得分，考虑否定词的影响
+      if (this.sentimentDict.表扬.has(token)) {
+        dictScore += hasNegative ? -1 : 1;
+        hasNegative = false;  // 重置否定标记
+      }
+      if (this.sentimentDict.批评.has(token)) {
+        dictScore += hasNegative ? 1 : -1;
+        hasNegative = false;  // 重置否定标记
+      }
+    });
+
+    // 如果命中词典，直接使用词典结果
+    if (dictScore !== 0) {
+      console.log('命中词典，得分:', dictScore);
+      const confidence = Math.min(Math.abs(dictScore) / 2 + 0.5, 0.95);
+      return {
+        label: dictScore > 0 ? '表扬' : '批评',
+        confidence
+      };
+    }
+
+    // 否则使用朴素贝叶斯分类
     const total = Object.values(this.classCounts).reduce((a, b) => a + b, 0);
+    console.log('未命中词典，使用朴素贝叶斯分类');
     
     // 计算每个类别的概率
     const scores = {};
     Object.keys(this.classCounts).forEach(label => {
       // 类别的先验概率（取对数防止数值下溢）
       let score = Math.log(this.classCounts[label] / total);
+      console.log(`${label}类别的先验概率:`, Math.exp(score));  // 查看先验概率
       
       // 累加词语的条件概率
       tokens.forEach(token => {
         if (this.vocabulary.has(token)) {
-          score += Math.log(this.getWordProb(token, label));
+          const prob = this.getWordProb(token, label);
+          score += Math.log(prob);
+          console.log(`词语 "${token}" 在 ${label} 类别下的条件概率:`, prob);  // 查看条件概率
         }
       });
       
       scores[label] = score;
     });
+
+    console.log('最终得分:', scores);  // 查看最终得分
 
     // 找出最高分的类别
     let maxLabel = Object.keys(scores)[0];
@@ -100,16 +189,19 @@ class NaiveBayes {
       }
     });
 
-    // 计算置信度（将对数概率转换为普通概率）
+    // 调整朴素贝叶斯的置信度计算
     const logProbs = Object.values(scores);
     const maxLogProb = Math.max(...logProbs);
     const exps = logProbs.map(p => Math.exp(p - maxLogProb));
     const sumExp = exps.reduce((a, b) => a + b, 0);
-    const confidence = Math.exp(maxScore - maxLogProb) / sumExp;
+    // 基础置信度稍低，因为没有命中词典
+    const confidence = Math.min((Math.exp(maxScore - maxLogProb) / sumExp) * 0.8, 0.9);
+
+    console.log('预测结果:', { label: maxLabel, confidence });  // 查看预测结果
 
     return {
       label: maxLabel,
-      confidence: confidence
+      confidence
     };
   }
 
@@ -123,8 +215,26 @@ class NaiveBayes {
     // 计算每个词在每个类别中的权重
     this.vocabulary.forEach(word => {
       Object.keys(this.classCounts).forEach(label => {
-        const prob = this.getWordProb(word, label);
-        weights[label].push({ word, weight: prob });
+        // 计算该词在当前类别中的条件概率
+        const probInClass = this.getWordProb(word, label);
+        
+        // 计算该词在其他类别中的条件概率
+        const otherLabel = label === "表扬" ? "批评" : "表扬";
+        const probInOther = this.getWordProb(word, otherLabel);
+
+        // 计算权重得分 (用两个类别概率的比值)
+        const score = probInClass / (probInClass + probInOther);
+
+        // 只有当词频足够时才考虑
+        const freq = this.wordFreq[label].get(word) || 0;
+        if (freq >= 1) {  // 至少出现过一次
+          weights[label].push({ 
+            word,
+            weight: score,
+            // 是否是词典中的词（用于UI展示）
+            inDict: this.sentimentDict[label].has(word)
+          });
+        }
       });
     });
 
@@ -140,7 +250,7 @@ class NaiveBayes {
 
 // 示例数据
 const exampleData = [
-  { text: "这次考试考得很好！", label: "表扬" },
+  { text: "这次考试考得很好", label: "表扬" },
   { text: "真是太马虎了", label: "批评" },
   { text: "做得非常认真", label: "表扬" },
   { text: "还需要更多练习", label: "批评" },
@@ -407,18 +517,36 @@ const TextClassifier = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {words.map((item, index) => {
-                          const weight = Math.min(100, item.weight * 1000);
-                          const bgColor = label === "表扬" 
-                            ? `rgba(34, 197, 94, ${weight / 200})`  // 绿色
-                            : `rgba(239, 68, 68, ${weight / 200})`; // 红色
+                          // 将权重映射到透明度，让差异更明显
+                          const opacity = 0.2 + Math.pow(item.weight, 2);
                           
+                          // 使用 HSL 颜色以获得更好的对比度
+                          const bgColor = label === "表扬" 
+                            ? `hsla(142, 76%, 36%, ${opacity})`    // 深绿色
+                            : `hsla(0, 84%, 60%, ${opacity})`;     // 深红色
+                          
+                          // 文字颜色
+                          const textColor = opacity > 0.4
+                            ? 'white'   
+                            : label === "表扬" 
+                              ? 'hsl(142, 76%, 25%)'   
+                              : 'hsl(0, 84%, 40%)';    
+
                           return (
                             <div 
                               key={index}
                               className="flex items-center justify-center p-2 rounded text-sm font-medium"
-                              style={{ backgroundColor: bgColor }}
+                              style={{ 
+                                backgroundColor: bgColor,
+                                color: textColor,
+                                boxShadow: opacity > 0.5 ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                                transition: 'all 0.2s ease'
+                              }}
                             >
                               {item.word}
+                              <span className="ml-1 opacity-50 text-xs">
+                                {(item.weight * 100).toFixed(0)}%
+                              </span>
                             </div>
                           );
                         })}
