@@ -135,7 +135,7 @@ function App() {
         <a 
           href={appendUrlParams("https://momodel.cn", { src: "zjsr" })}
           target="_blank" 
-          className="flex-1"
+          className="flex-1 transition-all duration-300 hover:-translate-y-1"
           onClick={() => handlePlatformClick('mo')}
         >
           <img 
@@ -148,7 +148,7 @@ function App() {
         <a 
           href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })}
           target="_blank" 
-          className="flex-1"
+          className="flex-1 transition-all duration-300 hover:-translate-y-1"
           onClick={() => handlePlatformClick('app')}
         >
           <img 
