@@ -20,12 +20,22 @@ import {
 } from "@/components/ui/carousel";
 import { Card } from "@/components/ui/card";
 
+// URL 参数拼接工具函数
+const appendUrlParams = (url, params) => {
+  const urlObj = new URL(url);
+  Object.entries(params).forEach(([key, value]) => {
+    urlObj.searchParams.append(key, value);
+  });
+  return urlObj.toString();
+};
+
 // 轮播数据
 const CAROUSEL_DATA = [
   {
     id: 1,
     title: "Baby生成器",
     link: "https://momodel.cn/explore/66c5a22ea611758a8f66081f?type=app",
+    platform: 'mo',
     image: {
       pc: babyAppPc,
       mobile: babyAppMobile
@@ -35,6 +45,7 @@ const CAROUSEL_DATA = [
     id: 2,
     title: "Baby生成器",
     link: "https://momodel.cn/explore/66c5a22ea611758a8f66081f?type=app",
+    platform: 'mo',
     image: {
       pc: babyAppPc,
       mobile: babyAppMobile
@@ -66,6 +77,29 @@ function App() {
     // 清理定时器
     return () => clearInterval(autoplayInterval);
   }, [api]);
+
+  // 页面加载埋点
+  useEffect(() => {
+    window.dataLayer?.push({
+      event: 'zjsr_open'
+    });
+  }, []);
+
+  // 平台跳转埋点
+  const handlePlatformClick = (platform) => {
+    window.dataLayer?.push({
+      event: 'zjsr_go_click',
+      custom_key1: platform
+    });
+  };
+
+  // Banner点击埋点
+  const handleBannerClick = (platform) => {
+    window.dataLayer?.push({
+      event: 'zjsr_banner_click',
+      custom_key1: platform
+    });
+  };
 
   // 点击轮播点切换
   const handleDotClick = (index) => {
@@ -99,9 +133,10 @@ function App() {
           : 'max-w-4xl mb-8 flex flex-row gap-4'
       }`}>
         <a 
-          href="https://momodel.cn" 
+          href={appendUrlParams("https://momodel.cn", { src: "zjsr" })}
           target="_blank" 
           className="flex-1"
+          onClick={() => handlePlatformClick('mo')}
         >
           <img 
             src={isMobile ? moMobile : moPc}
@@ -111,9 +146,10 @@ function App() {
         </a>
 
         <a 
-          href="https://app.momodel.cn" 
+          href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })}
           target="_blank" 
           className="flex-1"
+          onClick={() => handlePlatformClick('app')}
         >
           <img 
             src={isMobile ? moAppMobile : moAppPc}
@@ -142,7 +178,11 @@ function App() {
             <CarouselContent>
               {CAROUSEL_DATA.map((item) => (
                 <CarouselItem key={item.id} className="basis-full">
-                  <a href={item.link} target="_blank">
+                  <a 
+                    href={appendUrlParams(item.link, { src: "zjsrbanner" })}
+                    target="_blank"
+                    onClick={() => handleBannerClick(item.platform)}
+                  >
                     <img 
                       src={isMobile ? item.image.mobile : item.image.pc}
                       alt={item.title}

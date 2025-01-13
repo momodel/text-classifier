@@ -166,8 +166,41 @@ const TextClassifier = () => {
     setModelTrained(false);
   };
 
+  // Tab切换
+  const handleTabChange = (tab) => {
+    const tabNames = {
+      label: '数据标注',
+      train: '模型训练',
+      test: '模型测试'
+    };
+    
+    window.dataLayer?.push({
+      event: 'zjsr_tab_switch',
+      custom_key1: tabNames[tab]
+    });
+    setActiveTab(tab);
+  };
+
+  // 标注
+  const handleLabel = (type) => {
+    if (!labelText.trim()) return;
+    
+    // 埋点
+    window.dataLayer?.push({
+      event: type === 'praise' ? 'zjsr_mark_praise' : 'zjsr_mark_criticize',
+      custom_key1: labelText
+    });
+
+    // 调用原有的标注逻辑
+    handleAddData(type === 'praise' ? '表扬' : '批评');
+  };
+
   // 训练模型
   const handleTrain = () => {
+    window.dataLayer?.push({
+      event: 'zjsr_model_train',
+      custom_key1: modelTrained ? '重新训练' : '开始训练'
+    });
     setIsTraining(true);
     setTrainProgress(0);
     
@@ -195,8 +228,21 @@ const TextClassifier = () => {
   // 测试模型
   const handleTest = () => {
     if (!testText.trim()) return;
+    
+    window.dataLayer?.push({
+      event: 'zjsr_test'
+    });
+
     const result = classifier.predict(testText);
     setTestResult(result);
+
+    // 测试结果埋点
+    window.dataLayer?.push({
+      event: 'zjsr_test_result',
+      custom_key1: testText,
+      custom_key2: result.label,
+      custom_key3: result.confidence
+    });
   };
 
   // 添加删除数据的处理函数
@@ -229,7 +275,7 @@ const TextClassifier = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-4 w-full justify-start gap-2">
             <TabsTrigger 
               value="label" 
@@ -267,14 +313,14 @@ const TextClassifier = () => {
               />
               <div className="flex gap-2">
                 <Button 
-                  onClick={() => handleAddData("表扬")}
+                  onClick={() => handleLabel('praise')}
                   variant="outline"
                   className="flex-1"
                 >
                   标注为表扬
                 </Button>
                 <Button 
-                  onClick={() => handleAddData("批评")}
+                  onClick={() => handleLabel('criticize')}
                   variant="outline"
                   className="flex-1"
                 >
