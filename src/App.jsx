@@ -160,7 +160,7 @@ function App() {
       </div>
 
       {/* 分类器主体 */}
-      <div className={`relative ${isMobile ? 'px-3 mb-4' : 'px-4 mb-8'}`}>
+      <div className={`relative ${isMobile ? 'px-3 mb-4' : 'mb-8'}`}>
         <TextClassifier />
       </div>
 
