@@ -325,8 +325,9 @@ const TextClassifier = () => {
     // 保留原有测试结果埋点
     window.dataLayer?.push({
       event: 'zjsr_test_result',
-      custom_key1: result.label,
-      custom_key2: result.confidence
+      custom_key1: inputText,
+      custom_key2: result.label,
+      custom_key3: result.confidence
     });
   };
 

@@ -100,18 +100,18 @@ function App() {
   }, []);
 
   // 平台跳转埋点
-  const handlePlatformClick = (platform) => {
+  const handlePlatformClick = (link) => {
     window.dataLayer?.push({
       event: 'zjsr_go_click',
-      custom_key1: platform
+      custom_key1: link
     });
   };
 
   // Banner点击埋点
-  const handleBannerClick = (platform) => {
+  const handleBannerClick = (link) => {
     window.dataLayer?.push({
       event: 'zjsr_banner_click',
-      custom_key1: platform
+      custom_key1: link
     });
   };
 
@@ -150,7 +150,7 @@ function App() {
           href={appendUrlParams("https://momodel.cn", { src: "zjsr" })}
           target="_blank" 
           className="flex-1 transition-all duration-300 hover:-translate-y-1"
-          onClick={() => handlePlatformClick('mo')}
+          onClick={() => handlePlatformClick("https://momodel.cn")}
         >
           <img 
             src={isMobile ? moMobile : moPc}
@@ -163,7 +163,7 @@ function App() {
           href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })}
           target="_blank" 
           className="flex-1 transition-all duration-300 hover:-translate-y-1"
-          onClick={() => handlePlatformClick('app')}
+          onClick={() => handlePlatformClick("https://app.momodel.cn")}
         >
           <img 
             src={isMobile ? moAppMobile : moAppPc}
@@ -195,7 +195,7 @@ function App() {
                   <a 
                     href={item.platform === 'mo' ? appendUrlParams(item.link, { src: "zjsrbanner" }) : appendUrlParams('https://app.momodel.cn', { src: "zjsrbanner" })}
                     target="_blank"
-                    onClick={() => handleBannerClick(item.platform)}
+                    onClick={() => handleBannerClick(item.platform === 'mo' ? item.link : 'https://app.momodel.cn')}
                   >
                     <img 
                       src={isMobile ? item.image.mobile : item.image.pc}
