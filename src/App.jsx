@@ -149,26 +149,26 @@ function App() {
         <a 
           href={appendUrlParams("https://momodel.cn", { src: "zjsr" })}
           target="_blank" 
-          className="flex-1 transition-all duration-300 hover:-translate-y-1"
+          className={`flex-1 ${!isMobile && 'transition-all duration-300 hover:-translate-y-1'}`}
           onClick={() => handlePlatformClick("https://momodel.cn")}
         >
           <img 
             src={isMobile ? moMobile : moPc}
             alt="Mo平台" 
-            className="w-full h-auto rounded-2xl shadow-[10px_10px_10px_0px_rgba(138,207,254,0.10)]"
+            className="w-full h-auto rounded-lg shadow-[10px_10px_10px_0px_rgba(138,207,254,0.10)]"
           />
         </a>
 
         <a 
           href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })}
           target="_blank" 
-          className="flex-1 transition-all duration-300 hover:-translate-y-1"
+          className={`flex-1 ${!isMobile && 'transition-all duration-300 hover:-translate-y-1'}`}
           onClick={() => handlePlatformClick("https://app.momodel.cn")}
         >
           <img 
             src={isMobile ? moAppMobile : moAppPc}
             alt="Mo卡片" 
-            className="w-full h-auto rounded-2xl shadow-[10px_10px_10px_0px_rgba(138,159,254,0.10)]"
+            className="w-full h-auto rounded-lg shadow-[10px_10px_10px_0px_rgba(138,159,254,0.10)]"
           />
         </a>
       </div>
