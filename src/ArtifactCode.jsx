@@ -283,7 +283,8 @@ const TextClassifier = () => {
       custom_key1: inputText
     });
 
-    setDataset([...dataset, { text: inputText, label }]);
+    // 新数据放在顶部
+    setDataset([{ text: inputText, label }, ...dataset]);
     setInputText("");
     
     // 如果达到6条数据，自动进入下一步
