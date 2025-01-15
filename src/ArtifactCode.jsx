@@ -14,28 +14,57 @@ class NaiveBayes {
       "表扬": new Set([
         // 学习态度
         '认真', '专注', '仔细', '用心', '细心', '耐心', '专心', '努力', '勤奋', '踏实',
+        '积极', '主动', '专注', '认真听讲', '按时完成', '准时交作业', '爱思考', '好学',
+        
         // 学习能力
         '优秀', '聪明', '灵活', '全面', '扎实', '出色', '优异', '突出', '卓越', '杰出',
+        '聪明伶俐', '反应快', '记性好', '理解快', '学得快', '掌握得好', '完成得好',
+        
         // 进步表现
         '进步', '提高', '改进', '成长', '突破', '创新', '超越', '优化', '完善', '提升',
+        '有进步', '明显进步', '很大进步', '越来越好', '比上次好', '比以前好',
+        
         // 品质评价
         '好', '棒', '强', '佳', '优', '精', '妙', '赞', '绝', '秀',
+        '真棒', '真好', '很好', '非常好', '太棒了', '做得对', '表现好', '很棒',
+        
         // 具体表现
         '领悟快', '思维活跃', '举一反三', '善于思考', '独立思考', '善于总结', '理解深刻',
-        '掌握牢固', '融会贯通', '触类旁通', '学以致用', '成绩优异', '表现突出'
+        '掌握牢固', '融会贯通', '触类旁通', '学以致用', '成绩优异', '表现突出',
+        '字写得好', '读得好', '算得快', '记得牢', '背得好', '画得好', '唱得好',
+        '回答得好', '发言积极', '动作标准', '态度端正', '遵守纪律', '热心助人',
+        
+        // 添加一些偏积极的评价词
+        '还可以', '不错', '可以', '还行', '挺好',
       ]),
+      
       "批评": new Set([
         // 学习态度
         '马虎', '粗心', '懒惰', '散漫', '敷衍', '应付', '草率', '大意', '随意', '松懈',
+        '不认真', '不仔细', '不用心', '不专心', '不努力', '不积极', '不主动', '不好好学',
+        
         // 学习状态
         '走神', '分心', '跟不上', '掉队', '落后', '退步', '不专注', '不认真', '不用心', '不上心',
+        '开小差', '不听讲', '讲话', '玩手机', '睡觉', '不守纪律', '捣乱', '打闹',
+        
         // 问题表现
         '差', '弱', '糟', '劣', '低', '散', '乱', '错', '偏', '漏',
+        '不对', '做错了', '没做对', '没做好', '做得不好', '不行', '不够好', '太差了',
+        
         // 具体问题
         '理解不够', '掌握不牢', '基础薄弱', '注意力不集中', '学习习惯差', '完成不及时',
         '准备不充分', '态度不端正', '没有进步', '没有改进', '没有提高', '没有长进',
+        '字写得差', '读得不好', '算得慢', '记不住', '背不出', '画得不好', '唱得不好',
+        
         // 行为描述
-        '开小差', '不听讲', '不做作业', '不按时完成', '抄袭作业', '考试作弊'
+        '开小差', '不听讲', '不做作业', '不按时完成', '抄袭作业', '考试作弊',
+        '迟到', '早退', '旷课', '逃课', '不交作业', '作业没做完', '作业马虎',
+        '不带课本', '不带作业', '不带文具', '东西乱放', '座位不整洁',
+        
+        // 委婉批评
+        '不尽如人意', '有待改进', '不太理想', '未尽人意', '略显不足',
+        '仍需努力', '还需加强', '有待提高', '不够理想', '欠缺火候',
+        '稍显薄弱', '略有欠缺', '尚待提升', '有所欠缺', '不尽完美'
       ])
     };
 
@@ -58,8 +87,8 @@ class NaiveBayes {
     let i = 0;
     while (i < text.length) {
       let matched = false;
-      // 优先匹配词典中的词
-      for (let len = 4; len > 0; len--) {
+      // 增加最大匹配长度到6个字符
+      for (let len = 6; len > 1; len--) {  // 改为最少2个字符
         const word = text.slice(i, i + len);
         if (this.sentimentDict.表扬.has(word) || 
             this.sentimentDict.批评.has(word)) {
@@ -71,8 +100,18 @@ class NaiveBayes {
       }
       // 如果没有匹配到词典中的词，就按字符分词
       if (!matched) {
-        tokens.push(text[i]);
-        i++;
+        // 尝试匹配2字组合
+        const twoChars = text.slice(i, i + 2);
+        if (i + 1 < text.length && (
+          this.sentimentDict.表扬.has(twoChars) || 
+          this.sentimentDict.批评.has(twoChars)
+        )) {
+          tokens.push(twoChars);
+          i += 2;
+        } else {
+          tokens.push(text[i]);
+          i++;
+        }
       }
     }
     return tokens;
@@ -80,6 +119,9 @@ class NaiveBayes {
 
   // 训练模型
   train(dataset) {
+    // 保存数据集用于后续完全匹配检查
+    this.dataset = dataset;
+
     // 重置状态
     this.wordFreq = {
       "表扬": new Map(),
@@ -122,32 +164,57 @@ class NaiveBayes {
     const tokens = this.tokenize(text);
     console.log('分词结果:', tokens);
 
-    // 先检查是否命中词典
+    // 先检查是否与训练集中的数据完全匹配
+    const exactMatch = this.dataset?.find(item => item.text === text);
+    if (exactMatch) {
+      console.log('找到完全匹配:', exactMatch);
+      return {
+        label: exactMatch.label,
+        confidence: 0.95  // 完全匹配的情况下给出较高的置信度
+      };
+    }
+
+    // 如果没有完全匹配，再检查词典
     let dictScore = 0;
     let hasNegative = false;
 
     tokens.forEach(token => {
-      // 处理否定词
+      // 扩展否定词和程度词的处理
       if (token === '不' || token === '没' || token === '别' || token === '无') {
         hasNegative = !hasNegative;
+        return;
+      }
+      // 特殊处理"还"字，不作为否定词
+      if (token === '还') {
         return;
       }
 
       // 计算词典得分，考虑否定词的影响
       if (this.sentimentDict.表扬.has(token)) {
-        dictScore += hasNegative ? -1 : 1;
-        hasNegative = false;  // 重置否定标记
+        // 对于中性偏积极的词，减小分数权重
+        const score = token.includes('还') || token.includes('一般') ? 0.5 : 1;
+        dictScore += hasNegative ? -score : score;
+        hasNegative = false;
       }
       if (this.sentimentDict.批评.has(token)) {
-        dictScore += hasNegative ? 1 : -1;
-        hasNegative = false;  // 重置否定标记
+        // 对于中性偏消极的词，同样减小分数权重
+        const score = token.includes('不太') || token.includes('有待') ? 0.5 : 1;
+        dictScore += hasNegative ? score : -score;
+        hasNegative = false;
       }
     });
 
-    // 如果命中词典，直接使用词典结果
+    // 如果命中词典，调整置信度计算
     if (dictScore !== 0) {
       console.log('命中词典，得分:', dictScore);
-      const confidence = Math.min(Math.abs(dictScore) / 2 + 0.5, 0.95);
+      // 根据匹配词的长度增加置信度
+      const maxMatchLength = tokens.reduce((max, token) => 
+        Math.max(max, token.length), 0);
+      // 长词匹配给予更高的置信度
+      const confidence = Math.min(
+        Math.abs(dictScore) / 2 + (maxMatchLength > 3 ? 0.7 : 0.5),
+        0.95
+      );
       return {
         label: dictScore > 0 ? '表扬' : '批评',
         confidence
@@ -264,6 +331,7 @@ const TextClassifier = () => {
   const [modelTrained, setModelTrained] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [classifier] = useState(new NaiveBayes());
+  const [error, setError] = useState("");  // 添加错误提示状态
 
   // 添加步骤变化埋点
   useEffect(() => {
@@ -275,7 +343,11 @@ const TextClassifier = () => {
 
   // 标注数据
   const handleLabel = (label) => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {
+      setError("请输入一句话再进行标注");
+      return;
+    }
+    setError("");  // 清除错误提示
     
     // 保留原有标注埋点
     window.dataLayer?.push({
@@ -312,7 +384,11 @@ const TextClassifier = () => {
 
   // 测试模型
   const handleTest = () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {
+      setError("请输入一句话再进行测试");
+      return;
+    }
+    setError("");  // 清除错误提示
 
     // 保留原有测试埋点
     window.dataLayer?.push({
@@ -348,6 +424,12 @@ const TextClassifier = () => {
     });
   };
 
+  // 在输入框变化时清除错误提示
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    setError("");
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-3 sm:p-6">
@@ -370,10 +452,15 @@ const TextClassifier = () => {
             <div className="space-y-3 sm:space-y-4">
               <Input
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
                 placeholder="在这里输入一句话..."
                 className="text-base sm:text-lg p-4 sm:p-6"
               />
+              {error && (
+                <div className="text-red-500 text-sm text-left ml-2">
+                  {error}
+                </div>
+              )}
               
               <div className="flex gap-2 sm:gap-4">
                 <Button 
@@ -449,10 +536,15 @@ const TextClassifier = () => {
             <div className="space-y-3 sm:space-y-4">
               <Input
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
                 placeholder="输入一句话，测试我能不能判断对..."
                 className="text-base sm:text-lg p-4 sm:p-6"
               />
+              {error && (
+                <div className="text-red-500 text-sm text-left ml-2">
+                  {error}
+                </div>
+              )}
               
               <Button 
                 onClick={handleTest}
