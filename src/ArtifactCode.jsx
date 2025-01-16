@@ -332,6 +332,7 @@ const TextClassifier = () => {
   const [testResult, setTestResult] = useState(null);
   const [classifier] = useState(new NaiveBayes());
   const [error, setError] = useState("");  // 添加错误提示状态
+  const [isTestLoading, setIsTestLoading] = useState(false);  // 添加测试加载状态
 
   // 添加步骤变化埋点
   useEffect(() => {
@@ -388,7 +389,7 @@ const TextClassifier = () => {
       setError("请输入一句话再进行测试");
       return;
     }
-    setError("");  // 清除错误提示
+    setError("");
 
     // 保留原有测试埋点
     window.dataLayer?.push({
@@ -396,16 +397,24 @@ const TextClassifier = () => {
       custom_key1: inputText
     });
 
-    const result = classifier.predict(inputText);
-    setTestResult(result);
+    // 添加加载效果
+    setIsTestLoading(true);
+    setTestResult(null);  // 清空当前结果
 
-    // 保留原有测试结果埋点
-    window.dataLayer?.push({
-      event: 'zjsr_test_result',
-      custom_key1: inputText,
-      custom_key2: result.label,
-      custom_key3: result.confidence
-    });
+    // 使用 setTimeout 模拟加载
+    setTimeout(() => {
+      const result = classifier.predict(inputText);
+      setTestResult(result);
+      setIsTestLoading(false);
+
+      // 埋点代码保持不变
+      window.dataLayer?.push({
+        event: 'zjsr_test_result',
+        custom_key1: inputText,
+        custom_key2: result.label,
+        custom_key3: result.confidence
+      });
+    }, 500);
   };
 
   // 添加重置函数
@@ -554,37 +563,49 @@ const TextClassifier = () => {
               </Button>
             </div>
 
-            {testResult && (
-              <>
-                <div className={`p-6 sm:p-8 rounded-lg text-center space-y-3 sm:space-y-4 ${
-                  testResult.label === "表扬" 
-                    ? "bg-green-50" 
-                    : "bg-red-50"
-                }`}>
-                  <div className="text-3xl sm:text-4xl">
+            {testResult && !isTestLoading && (
+              <div className={`p-6 sm:p-8 rounded-lg min-h-[200px] flex flex-col items-center justify-center gap-4 ${
+                testResult.label === '表扬' ? 'bg-green-50' : 'bg-red-50'
+              }`}>
+                <div className="h-[38px] sm:h-[44px] flex items-center justify-center">
+                  <span className="text-3xl sm:text-4xl">
                     {testResult.label === "表扬" ? "👍" : "👎"}
-                  </div>
-                  <div className="text-xl sm:text-2xl font-bold">
-                    我觉得这是
-                    <span className={testResult.label === "表扬" ? "text-green-600" : "text-red-600"}>
-                      {testResult.label}
-                    </span>
-                    的话
-                  </div>
-                  <div className="text-base sm:text-lg">
-                    我的把握程度是：{(testResult.confidence * 100).toFixed(0)}%
-                  </div>
+                  </span>
                 </div>
-
-                <Button 
-                  onClick={handleReset}
-                  variant="outline"
-                  className="w-full h-12 sm:h-16 text-base sm:text-lg mt-4"
-                >
-                  再玩一次 🔄
-                </Button>
-              </>
+                <div className="text-xl sm:text-2xl font-bold text-center">
+                  我觉得这是
+                  <span className={testResult.label === "表扬" ? "text-green-600" : "text-red-600"}>
+                    {testResult.label}
+                  </span>
+                  的话
+                </div>
+                <div className="text-base sm:text-lg text-center">
+                  我的把握程度是：{(testResult.confidence * 100).toFixed(0)}%
+                </div>
+              </div>
             )}
+
+            {isTestLoading && (
+              <div className="p-6 sm:p-8 bg-gray-50 rounded-lg min-h-[200px] flex flex-col items-center justify-center gap-4">
+                <div className="h-[38px] sm:h-[44px] flex items-center justify-center">
+                  <span className="text-3xl sm:text-4xl animate-bounce">🤔</span>
+                </div>
+                <div className="text-xl sm:text-2xl text-center">
+                  正在思考中...
+                </div>
+                <div className="text-base sm:text-lg text-center">
+                  &nbsp;
+                </div>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleReset}
+              variant="outline"
+              className="w-full h-12 sm:h-16 text-base sm:text-lg mt-4"
+            >
+              再玩一次 🔄
+            </Button>
           </div>
         )}
       </CardContent>
