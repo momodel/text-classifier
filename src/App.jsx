@@ -82,27 +82,33 @@ const CAROUSEL_DATA = [
 const COURSE_DATA = [
   {
     image: course1,
-    link: "https://momodel.cn/aiNewFirstClass"
+    link: "https://momodel.cn/aiNewFirstClass",
+    name: 'AI 通识第一课'
   },
   {
     image: course2,
-    link: "https://momodel.cn/classroom/course/detail?id=60f02c635076ff487bce4c6f&activeKey=info"
+    link: "https://momodel.cn/classroom/course/detail?id=60f02c635076ff487bce4c6f&activeKey=info",
+    name: '从 Python 到人工智能'
   },
   {
     image: course3,
-    link: "https://momodel.cn/classroom/course/detail?id=6173911eab37f12b14daf4a8&activeKey=info"
+    link: "https://momodel.cn/classroom/course/detail?id=6173911eab37f12b14daf4a8&activeKey=info",
+    name: '人工智能通识课'
   },
   {
     image: course4,
-    link: "https://momodel.cn/classroom/class/6711e88cc5eb5536a3e4e383?activeKey=intro"
+    link: "https://momodel.cn/classroom/class/6711e88cc5eb5536a3e4e383?activeKey=intro",
+    name: '诺奖后谈 AI | 人工智能通识课程系列公开课'
   },
   {
     image: course5,
-    link: "https://momodel.cn/classroom/class/658e2e7b891ad518e0274bd7?activeKey=intro"
+    link: "https://momodel.cn/classroom/class/658e2e7b891ad518e0274bd7?activeKey=intro",
+    name: '动手学大模型应用开发'
   },
   {
     image: course6,
-    link: "https://media.momodel.cn/article/%e7%8c%ab%e7%8b%97%e5%a4%a7%e6%88%98%ef%bc%9a%e4%bd%bf%e7%94%a8cnn%e5%bf%ab%e9%80%9f%e8%af%86%e5%88%ab%e5%ae%a0%e7%89%a9/1870/latest-articles"
+    link: "https://media.momodel.cn/article/%e7%8c%ab%e7%8b%97%e5%a4%a7%e6%88%98%ef%bc%9a%e4%bd%bf%e7%94%a8cnn%e5%bf%ab%e9%80%9f%e8%af%86%e5%88%ab%e5%ae%a0%e7%89%a9/1870/latest-articles",
+    name: '卷积神经网络-猫狗识别'
   }
 ];
 
@@ -264,7 +270,11 @@ function App() {
       <div className="relative mx-auto max-w-4xl mb-20 px-3">
         {/* 修改课程标题为可点击，添加移动端判断 */}
         <div className="mb-10">
-          <a href={appendUrlParams("https://momodel.cn/classroom", { src: "zjsr" })} target="_blank">
+          <a 
+            href={appendUrlParams("https://momodel.cn/classroom", { src: "zjsr" })} 
+            target="_blank"
+            onClick={() => window.dataLayer?.push({ event: 'zjsr_courses_title_click' })}
+          >
             <img 
               src={isMobile ? coursesTitleMobile : coursesTitle} 
               alt="Courses Title" 
@@ -274,7 +284,12 @@ function App() {
         </div>
         <div className={`grid ${isMobile ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-10'}`}>
           {COURSE_DATA.map((course, index) => (
-            <a key={index} href={appendUrlParams(course.link, { src: "zjsr" })} target="_blank">
+            <a 
+              key={index} 
+              href={appendUrlParams(course.link, { src: "zjsr" })} 
+              target="_blank"
+              onClick={() => window.dataLayer?.push({ event: 'zjsr_course_click', custom_key1: course.name })}
+            >
               <img 
                 src={course.image} 
                 alt={`Course ${index + 1}`} 
@@ -289,7 +304,11 @@ function App() {
       <div className="relative mx-auto max-w-4xl mb-20 px-3">
         {/* 修改 App Banner 标题为可点击，添加移动端判断 */}
         <div className="mb-10">
-          <a href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} target="_blank">
+          <a 
+            href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} 
+            target="_blank"
+            onClick={() => window.dataLayer?.push({ event: 'zjsr_app_banner_title_click' })}
+          >
             <img 
               src={isMobile ? appBannerTitleMobile : appBannerTitle} 
               alt="App Banner Title" 
@@ -297,7 +316,11 @@ function App() {
             />
           </a>
         </div>
-        <a href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} target="_blank">
+        <a 
+          href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} 
+          target="_blank"
+          onClick={() => window.dataLayer?.push({ event: 'zjsr_app_banner_click' })}
+        >
           <img 
             src={isMobile ? appBannerMobile : appBanner} 
             alt="App Banner" 
