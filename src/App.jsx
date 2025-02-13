@@ -17,6 +17,18 @@ import avatarAppPc from '@/assets/avatar_app_pc.png';
 import avatarAppMobile from '@/assets/avatar_app_mobile.png';
 import wardrobeAppPc from '@/assets/wardrobe_app_pc.png';
 import wardrobeAppMobile from '@/assets/wardrobe_app_mobile.png';
+import course1 from '@/assets/course1.png';
+import course2 from '@/assets/course2.png';
+import course3 from '@/assets/course3.png';
+import course4 from '@/assets/course4.png';
+import course5 from '@/assets/course5.png';
+import course6 from '@/assets/course6.png';
+import appBanner from '@/assets/app_banner.png';
+import appBannerMobile from '@/assets/app_banner_mobile.png';
+import coursesTitle from '@/assets/courses_title.png';
+import coursesTitleMobile from '@/assets/courses_title_mobile.png';
+import appBannerTitle from '@/assets/app_banner_title.png';
+import appBannerTitleMobile from '@/assets/app_banner_title_mobile.png';
 import {
   Carousel,
   CarouselContent,
@@ -64,6 +76,33 @@ const CAROUSEL_DATA = [
       pc: wardrobeAppPc,
       mobile: wardrobeAppMobile
     }
+  }
+];
+
+const COURSE_DATA = [
+  {
+    image: course1,
+    link: "https://momodel.cn/aiNewFirstClass"
+  },
+  {
+    image: course2,
+    link: "https://momodel.cn/classroom/course/detail?id=60f02c635076ff487bce4c6f&activeKey=info"
+  },
+  {
+    image: course3,
+    link: "https://momodel.cn/classroom/course/detail?id=6173911eab37f12b14daf4a8&activeKey=info"
+  },
+  {
+    image: course4,
+    link: "https://momodel.cn/classroom/class/6711e88cc5eb5536a3e4e383?activeKey=intro"
+  },
+  {
+    image: course5,
+    link: "https://momodel.cn/classroom/class/658e2e7b891ad518e0274bd7?activeKey=intro"
+  },
+  {
+    image: course6,
+    link: "https://media.momodel.cn/article/%e7%8c%ab%e7%8b%97%e5%a4%a7%e6%88%98%ef%bc%9a%e4%bd%bf%e7%94%a8cnn%e5%bf%ab%e9%80%9f%e8%af%86%e5%88%ab%e5%ae%a0%e7%89%a9/1870/latest-articles"
   }
 ];
 
@@ -179,7 +218,7 @@ function App() {
       </div>
 
       {/* Baby App 轮播 */}
-      <div className={`relative mx-auto ${isMobile ? 'px-3' : 'max-w-4xl mb-8'}`}>
+      <div className={`relative mx-auto ${isMobile ? 'px-3 mb-16' : 'max-w-4xl mb-20'}`}>
         <Card className="p-4">
           <Carousel
             setApi={setApi}
@@ -219,6 +258,52 @@ function App() {
             ))}
           </div>
         </Card>
+      </div>
+
+      {/* 课程图片 */}
+      <div className="relative mx-auto max-w-4xl mb-20 px-3">
+        {/* 修改课程标题为可点击，添加移动端判断 */}
+        <div className="mb-10">
+          <a href={appendUrlParams("https://momodel.cn/classroom", { src: "zjsr" })} target="_blank">
+            <img 
+              src={isMobile ? coursesTitleMobile : coursesTitle} 
+              alt="Courses Title" 
+              className="w-full h-auto mx-auto" 
+            />
+          </a>
+        </div>
+        <div className={`grid ${isMobile ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-10'}`}>
+          {COURSE_DATA.map((course, index) => (
+            <a key={index} href={appendUrlParams(course.link, { src: "zjsr" })} target="_blank">
+              <img 
+                src={course.image} 
+                alt={`Course ${index + 1}`} 
+                className="w-full h-auto rounded-lg shadow" 
+              />
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* App Banner */}
+      <div className="relative mx-auto max-w-4xl mb-20 px-3">
+        {/* 修改 App Banner 标题为可点击，添加移动端判断 */}
+        <div className="mb-10">
+          <a href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} target="_blank">
+            <img 
+              src={isMobile ? appBannerTitleMobile : appBannerTitle} 
+              alt="App Banner Title" 
+              className="w-full h-auto mx-auto" 
+            />
+          </a>
+        </div>
+        <a href={appendUrlParams("https://app.momodel.cn", { src: "zjsr" })} target="_blank">
+          <img 
+            src={isMobile ? appBannerMobile : appBanner} 
+            alt="App Banner" 
+            className="w-full h-auto" 
+          />
+        </a>
       </div>
     </div>
   );
